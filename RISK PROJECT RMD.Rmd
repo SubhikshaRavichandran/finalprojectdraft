@@ -1,0 +1,125 @@
+---
+title: "Project"
+output: pdf_document
+date: "2023-04-05"
+---
+
+# LOAN RISK PREDICTION MODEL USING DECISION TREE
+
+## DATA LOADING
+```{r}
+data=read.csv("credit_risk_dataset.csv")
+```
+
+```{r}
+head(data)
+```
+
+## DATA PREPROCESSING
+```{r}
+#Checking for any missing values in the dataset.
+sum(is.na(data))
+```
+There are missing values in the dataset. We need to remove the missing values from the dataset.
+
+```{r}
+#Removing rows with missing values
+data=na.omit(data)
+sum(is.na(data))
+```
+
+All the missing values have been removed from the dataset.
+
+```{r}
+#Checking the datatype of each column in R
+str(data)
+```
+
+```{r}
+#convert the categorical variables to factors
+data$cb_person_default_on_file=as.factor(data$cb_person_default_on_file)
+data$person_home_ownership=as.factor(data$person_home_ownership)
+data$loan_intent=as.factor(data$loan_intent)
+data$loan_grade=as.factor(data$loan_grade)
+```
+
+All the datatypes are correct, So no need of changing. The data pre processing is done.
+
+## DATA VISUALISATION
+
+
+### PLOTTING A SCATTERPLOT BETWEEN THE INCOME AND LOAN AMOUNT
+```{r}
+library(ggplot2)
+pt=ggplot(data=data)+geom_point(aes(y = data$person_income, x = data$loan_amnt))+labs(y = "Person Income", x = "Loan Amount", title = "Scatterplot of Person Income vs Loan Amount")
+print(pt)
+```
+
+```{r}
+pt2=ggplot(data=data)+geom_boxplot(aes(x = data$loan_grade, y = data$loan_int_rate))+labs(x = "Loan Grade", y = "Loan Interest Rate", title = "Boxplot of Loan Grade vs Loan Interest Rate")
+plot(pt2)
+```
+We can see that the Interest Rates are considerably increasing with the level of Loan Grades.
+
+## DATA SPLITTING
+
+We have a large dataset of nearly 30,000 observations. So we can use more data to train. The preferable ratio will be 90% to training data and 10% to testing data.
+
+```{r}
+library(caret)
+train_index <- createDataPartition(data$loan_status, p = 0.9, list = FALSE)
+train_data <- data[train_index, ] 
+test_data <- data[-train_index, ]
+```
+
+
+## BUILDING THE FIRST MODEL
+
+```{r}
+library(rpart)#required library
+library(rpart.plot)
+variable=data$cb_person_default_on_file
+```
+
+
+```{r}
+model1= rpart(cb_person_default_on_file ~ ., data = train_data)
+```
+```{r}
+rpart.plot(model1)
+```
+
+## MODEL-1 PREDICTION AND EVALUATION
+
+```{r}
+predict1 =predict(model1, test_data, type = "class")
+```
+
+```{r}
+# Compute confusion matrix and accuracy for the Decision Tree model
+confmat1 = table(test_data$cb_person_default_on_file, predict1)
+acc1 = sum(diag(confmat1)) / sum(confmat1)
+print(paste("Accuracy:", round(acc1, 3)*100,"%"))
+```
+## MODEL-2 BUILDING - NAIVE BAYES 
+
+```{r}
+library(e1071)
+model2 = naiveBayes(cb_person_default_on_file ~ ., data = train_data)
+pred2 = predict(model2, test_data)
+
+```
+
+## MODEL-2 EVALUATION
+```{r}
+# Compute confusion matrix for Naive Bayes Model
+confmat2 <- table(test_data$cb_person_default_on_file,pred2)
+print(confmat2)
+
+# Compute accuracy for the model
+acc2 <- sum(diag(confmat2)) / sum(confmat2)
+print(paste("Accuracy:", round(acc2, 3)*100,"%"))
+
+
+```
+
